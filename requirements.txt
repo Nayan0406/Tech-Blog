@@ -5,3 +5,4 @@ openai
 slugify
 gunicorn
 flask_cors
+pymongo

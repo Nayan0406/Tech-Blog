@@ -4,3 +4,4 @@ python-slugify
 openai
 slugify
 gunicorn
+flask_cors

@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>Edit Blog</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #111;
+      color: #eee;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding-top: 40px;
+    }
+
+    h1 {
+      color: #00ffff;
+      margin-bottom: 20px;
+    }
+
+    form {
+      background: #222;
+      padding: 30px;
+      border-radius: 8px;
+      box-shadow: 0 0 15px rgba(0,255,255,0.2);
+      width: 100%;
+      max-width: 700px;
+    }
+
+    input[type="text"], textarea {
+      width: 100%;
+      padding: 10px;
+      margin-top: 10px;
+      background: #333;
+      color: #fff;
+      border: 1px solid #444;
+      border-radius: 5px;
+      font-size: 16px;
+    }
+
+    textarea {
+      min-height: 300px;
+      resize: vertical;
+    }
+
+    button {
+      margin-top: 20px;
+      padding: 10px 20px;
+      background: #00ffff;
+      color: #000;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      font-weight: bold;
+    }
+
+    button:hover {
+      background: #00dddd;
+    }
+
+    a.back-link {
+      color: #ccc;
+      margin-top: 20px;
+      display: inline-block;
+      text-decoration: underline;
+    }
+  </style>
+</head>
+<body>
+  <h1>Edit Blog</h1>
+  <form method="POST">
+    <label for="title">Blog Title:</label>
+    <input type="text" id="title" name="title" value="{{ title }}" required>
+
+    <label for="content">Blog HTML Content:</label>
+    <textarea id="content" name="content">{{ content|safe }}</textarea>
+
+    <button type="submit">Save Changes</button>
+  </form>
+
+  <a href="{{ url_for('admin') }}" class="back-link">← Back to Admin Panel</a>
+</body>
+</html>

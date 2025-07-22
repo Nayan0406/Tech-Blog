@@ -1,0 +1,561 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>TechPulse Daily Blog</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <script>
+    // Refresh page every 2 minutes
+    setInterval(() => {
+      location.reload();
+    }, 120000);
+  </script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap');
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background: #0a0a0a;
+    min-height: 100vh;
+    position: relative;
+    overflow-x: hidden;
+  }
+
+  /* Animated Background */
+  body::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: 
+      radial-gradient(circle at 20% 20%, rgba(139, 92, 246, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 80% 80%, rgba(236, 72, 153, 0.15) 0%, transparent 50%),
+      radial-gradient(circle at 40% 60%, rgba(59, 130, 246, 0.1) 0%, transparent 50%),
+      linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 25%, #16213e 50%, #0f3460 75%, #1a1a2e 100%);
+    background-size: 400% 400%;
+    animation: gradientFlow 25s ease infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  /* Floating particles */
+  body::after {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-image: 
+      radial-gradient(2px 2px at 40px 60px, rgba(139, 92, 246, 0.4), transparent),
+      radial-gradient(2px 2px at 90px 40px, rgba(236, 72, 153, 0.4), transparent),
+      radial-gradient(1px 1px at 130px 80px, rgba(59, 130, 246, 0.4), transparent),
+      radial-gradient(1px 1px at 160px 30px, rgba(139, 92, 246, 0.4), transparent);
+    background-repeat: repeat;
+    background-size: 200px 200px;
+    animation: float 20s linear infinite;
+    pointer-events: none;
+    z-index: -1;
+  }
+
+  @keyframes gradientFlow {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+  }
+
+  @keyframes float {
+    0% { transform: translateY(0px); }
+    50% { transform: translateY(-20px); }
+    100% { transform: translateY(0px); }
+  }
+
+  .container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 60px 20px;
+    position: relative;
+    z-index: 1;
+  }
+
+  /* Enhanced Header */
+  .header {
+    text-align: center;
+    margin-bottom: 80px;
+    position: relative;
+  }
+
+  .header::before {
+    content: '';
+    position: absolute;
+    top: -30px;
+    left: 50%;
+    transform: translateX(-50%);
+    width: 100px;
+    height: 4px;
+    background: linear-gradient(90deg, transparent, #8b5cf6, #ec4899, #3b82f6, transparent);
+    border-radius: 2px;
+    animation: headerGlow 3s ease-in-out infinite;
+  }
+
+  @keyframes headerGlow {
+    0%, 100% { opacity: 0.5; width: 100px; }
+    50% { opacity: 1; width: 150px; }
+  }
+
+  .container h1 {
+    font-size: clamp(3.5rem, 8vw, 7rem);
+    font-weight: 900;
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 25%, #3b82f6 50%, #06b6d4 75%, #8b5cf6 100%);
+    background-size: 300% 300%;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+    animation: textShimmer 4s ease-in-out infinite, fadeInDown 1s ease-out;
+    letter-spacing: -0.03em;
+    position: relative;
+    margin-bottom: 20px;
+  }
+
+  .subtitle {
+    font-size: 1.2rem;
+    color: #94a3b8;
+    font-weight: 400;
+    margin-bottom: 30px;
+    opacity: 0;
+    animation: fadeInUp 1s ease-out 0.5s forwards;
+  }
+
+  @keyframes textShimmer {
+    0%, 100% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+  }
+
+  @keyframes fadeInDown {
+    from {
+      opacity: 0;
+      transform: translateY(-50px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(30px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  /* Enhanced Cards */
+  .card {
+    background: rgba(255, 255, 255, 0.03);
+    backdrop-filter: blur(20px);
+    border-radius: 24px;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    margin-bottom: 50px;
+    overflow: hidden;
+    position: relative;
+    transition: all 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    box-shadow: 
+      0 25px 50px rgba(0, 0, 0, 0.4),
+      0 15px 30px rgba(0, 0, 0, 0.3),
+      inset 0 1px 0 rgba(255, 255, 255, 0.05);
+    animation: cardSlideIn 0.8s ease-out backwards;
+    display: flex;
+    flex-direction: row;
+    align-items: stretch;
+    min-height: 300px;
+  }
+
+  @keyframes cardSlideIn {
+    from {
+      opacity: 0;
+      transform: translateY(80px) scale(0.9);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0) scale(1);
+    }
+  }
+
+  .card:nth-child(2) { animation-delay: 0.1s; }
+  .card:nth-child(3) { animation-delay: 0.2s; }
+  .card:nth-child(4) { animation-delay: 0.3s; }
+  .card:nth-child(5) { animation-delay: 0.4s; }
+  .card:nth-child(6) { animation-delay: 0.5s; }
+
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, 
+      rgba(139, 92, 246, 0.1) 0%, 
+      rgba(236, 72, 153, 0.08) 35%, 
+      rgba(59, 130, 246, 0.1) 70%, 
+      rgba(6, 182, 212, 0.08) 100%);
+    opacity: 0;
+    transition: opacity 0.4s ease;
+    z-index: 1;
+  }
+
+  .card:hover::before {
+    opacity: 1;
+  }
+
+  /* Glowing border effect */
+  .card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(135deg, #8b5cf6, #ec4899, #3b82f6, #06b6d4);
+    border-radius: 24px;
+    opacity: 0;
+    z-index: -1;
+    blur: 20px;
+    transition: opacity 0.4s ease;
+  }
+
+  .card:hover::after {
+    opacity: 0.3;
+  }
+
+  .card:hover {
+    transform: translateY(-15px) scale(1.02);
+    box-shadow: 
+      0 40px 80px rgba(0, 0, 0, 0.5),
+      0 20px 40px rgba(139, 92, 246, 0.2),
+      0 10px 20px rgba(236, 72, 153, 0.15),
+      inset 0 1px 0 rgba(255, 255, 255, 0.1);
+    border-color: rgba(139, 92, 246, 0.3);
+  }
+
+  .card img {
+    width: 35%;
+    height: 100%;
+    min-height: 300px;
+    object-fit: cover;
+    transition: all 0.6s ease;
+    position: relative;
+    z-index: 2;
+    filter: brightness(0.9) contrast(1.1);
+    flex-shrink: 0;
+  }
+
+  .card:hover img {
+    transform: scale(1.05);
+    filter: brightness(1) contrast(1.2);
+  }
+
+  .card-content {
+    padding: 35px;
+    position: relative;
+    z-index: 3;
+    background: rgba(0, 0, 0, 0.3);
+    backdrop-filter: blur(15px);
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .card-content h3 {
+    font-size: 28px;
+    font-weight: 700;
+    color: #ffffff;
+    margin-bottom: 18px;
+    line-height: 1.2;
+    transition: all 0.3s ease;
+  }
+
+  .card:hover .card-content h3 {
+    color: #8b5cf6;
+    transform: translateY(-2px);
+  }
+
+  .card-date {
+    font-size: 13px;
+    color: #8b5cf6;
+    margin-bottom: 18px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    position: relative;
+    display: inline-block;
+    padding: 6px 12px;
+    background: rgba(139, 92, 246, 0.1);
+    border-radius: 20px;
+    border: 1px solid rgba(139, 92, 246, 0.2);
+  }
+
+  .card-date::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: -8px;
+    transform: translateY(-50%);
+    width: 4px;
+    height: 4px;
+    background: #8b5cf6;
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+
+  @keyframes pulse {
+    0%, 100% { opacity: 0.5; transform: translateY(-50%) scale(1); }
+    50% { opacity: 1; transform: translateY(-50%) scale(1.2); }
+  }
+
+  .card-desc {
+    font-size: 17px;
+    color: #cbd5e1;
+    line-height: 1.7;
+    margin-bottom: 30px;
+    font-weight: 400;
+  }
+
+  .read-more {
+    display: inline-flex;
+    align-items: center;
+    gap: 12px;
+    padding: 16px 32px;
+    background: linear-gradient(135deg, #8b5cf6 0%, #ec4899 50%, #3b82f6 100%);
+    color: #ffffff;
+    text-decoration: none;
+    border-radius: 50px;
+    font-weight: 600;
+    font-size: 15px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    position: relative;
+    overflow: hidden;
+    box-shadow: 
+      0 10px 30px rgba(139, 92, 246, 0.4),
+      0 5px 15px rgba(236, 72, 153, 0.3);
+  }
+
+  .read-more::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.3), transparent);
+    transition: left 0.6s ease;
+  }
+
+  .read-more:hover::before {
+    left: 100%;
+  }
+
+  .read-more::after {
+    content: '→';
+    font-size: 18px;
+    transition: transform 0.3s ease;
+  }
+
+  .read-more:hover {
+    background: linear-gradient(135deg, #7c3aed 0%, #db2777 50%, #2563eb 100%);
+    transform: translateY(-3px) scale(1.05);
+    box-shadow: 
+      0 15px 40px rgba(139, 92, 246, 0.5),
+      0 8px 20px rgba(236, 72, 153, 0.4);
+  }
+
+  .read-more:hover::after {
+    transform: translateX(6px);
+  }
+
+  /* Enhanced Responsive Design */
+  @media (max-width: 768px) {
+    .container {
+      padding: 40px 15px;
+    }
+
+    .header {
+      margin-bottom: 60px;
+    }
+
+    .container h1 {
+      font-size: clamp(2.5rem, 10vw, 4rem);
+    }
+
+    .subtitle {
+      font-size: 1rem;
+    }
+
+    .card {
+      margin-bottom: 35px;
+      flex-direction: column;
+      min-height: auto;
+    }
+
+    .card img {
+      width: 100%;
+      height: 220px;
+      min-height: 220px;
+    }
+
+    .card-content {
+      padding: 25px;
+    }
+
+    .card-content h3 {
+      font-size: 22px;
+    }
+
+    .card-desc {
+      font-size: 16px;
+    }
+
+    .read-more {
+      padding: 14px 28px;
+      font-size: 14px;
+    }
+  }
+
+  @media (max-width: 480px) {
+    .container {
+      padding: 30px 10px;
+    }
+
+    .card {
+      flex-direction: column;
+      min-height: auto;
+    }
+
+    .card img {
+      width: 100%;
+      height: 200px;
+      min-height: 200px;
+    }
+
+    .card-content {
+      padding: 20px;
+    }
+
+    .card-content h3 {
+      font-size: 20px;
+    }
+
+    .read-more {
+      padding: 12px 24px;
+      font-size: 13px;
+    }
+  }
+
+  /* Ultra-modern Scrollbar */
+  ::-webkit-scrollbar {
+    width: 6px;
+  }
+
+  ::-webkit-scrollbar-track {
+    background: rgba(0, 0, 0, 0.1);
+  }
+
+  ::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #8b5cf6, #ec4899);
+    border-radius: 10px;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #7c3aed, #db2777);
+  }
+
+  /* Enhanced Focus States */
+  .read-more:focus {
+    outline: 2px solid #8b5cf6;
+    outline-offset: 3px;
+  }
+
+  /* Loading animation for images */
+  .card img {
+    background: linear-gradient(90deg, rgba(139, 92, 246, 0.1), rgba(236, 72, 153, 0.1));
+    background-size: 200% 100%;
+    animation: imageLoad 2s ease-in-out infinite;
+  }
+
+  @keyframes imageLoad {
+    0% { background-position: -200% 0; }
+    100% { background-position: 200% 0; }
+  }
+
+  /* Subtle micro-interactions */
+  .card-content h3,
+  .card-date,
+  .card-desc {
+    transition: all 0.3s ease;
+  }
+
+  .card:hover .card-content h3,
+  .card:hover .card-date,
+  .card:hover .card-desc {
+    transform: translateY(-1px);
+  }
+</style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>TechPulse Daily</h1>
+      <p class="subtitle">Cutting-edge technology insights delivered daily</p>
+    </div>
+
+    {% for blog in blogs %}
+    <div class="card">
+      <img src="{{ blog.image_url }}" alt="Thumbnail">
+      <div class="card-content">
+        <h3>{{ blog.title }}</h3>
+        <p class="card-date">{{ blog.date }}</p>
+        <p class="card-desc">{{ blog.desc }}</p>
+        <a href="{{ blog.link }}" class="read-more">Read More</a>
+      </div>
+    </div>
+    {% endfor %}
+
+  </div>
+  <div class="pagination" style="text-align:center; margin: 30px 0;">
+  {% if page > 1 %}
+    <a href="{{ url_for('index', page=page-1) }}" 
+       style="color:#00ffff; text-decoration:none; padding:8px 16px; border:1px solid #00ffff; border-radius:5px; margin:0 5px; transition:background 0.3s ease;">
+      ⬅ Prev
+    </a>
+  {% endif %}
+
+  <span style="color:#00ffff; font-weight:bold; margin: 0 10px;">
+    Page {{ page }} of {{ total_pages }}
+  </span>
+
+  {% if page < total_pages %}
+    <a href="{{ url_for('index', page=page+1) }}" 
+       style="color:#00ffff; text-decoration:none; padding:8px 16px; border:1px solid #00ffff; border-radius:5px; margin:0 5px; transition:background 0.3s ease;">
+      Next ➡
+    </a>
+  {% endif %}
+</div>
+
+
+</body>
+</html>

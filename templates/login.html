@@ -1,0 +1,390 @@
+<!-- templates/login.html -->
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="UTF-8">
+  <title>TechPulse - Admin Login</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    body {
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      background: linear-gradient(135deg, #0a0a0a 0%, #1a1a2e 50%, #16213e 100%);
+      color: #eee;
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 100vh;
+      overflow: hidden;
+      position: relative;
+    }
+
+    /* Animated background particles */
+    body::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      background: radial-gradient(circle, rgba(0,255,255,0.1) 1px, transparent 1px);
+      background-size: 50px 50px;
+      animation: pulse 4s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 0.3; }
+      50% { opacity: 0.8; }
+    }
+
+    /* Floating orbs */
+    .orb {
+      position: absolute;
+      border-radius: 50%;
+      background: linear-gradient(45deg, #00ffff, #0080ff);
+      filter: blur(1px);
+      animation: float 6s ease-in-out infinite;
+      z-index: -1;
+    }
+
+    .orb1 {
+      width: 100px;
+      height: 100px;
+      top: 20%;
+      left: 10%;
+      animation-delay: 0s;
+    }
+
+    .orb2 {
+      width: 60px;
+      height: 60px;
+      top: 60%;
+      right: 20%;
+      animation-delay: 2s;
+    }
+
+    .orb3 {
+      width: 80px;
+      height: 80px;
+      bottom: 30%;
+      left: 60%;
+      animation-delay: 4s;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(180deg); }
+    }
+
+    /* Login container */
+    .login-container {
+      position: relative;
+      z-index: 10;
+    }
+
+    .login-box {
+      background: rgba(34, 34, 34, 0.95);
+      backdrop-filter: blur(20px);
+      padding: 50px;
+      border-radius: 20px;
+      box-shadow: 
+        0 25px 50px rgba(0, 255, 255, 0.1),
+        0 0 0 1px rgba(0, 255, 255, 0.2),
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
+      width: 100%;
+      max-width: 450px;
+      position: relative;
+      overflow: hidden;
+      animation: slideIn 0.8s ease-out;
+    }
+
+    @keyframes slideIn {
+      from {
+        opacity: 0;
+        transform: translateY(50px);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .login-box::before {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(45deg, transparent, rgba(0, 255, 255, 0.03), transparent);
+      animation: rotate 10s linear infinite;
+      z-index: -1;
+    }
+
+    @keyframes rotate {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(360deg); }
+    }
+
+    /* Logo/Brand */
+    .brand {
+      text-align: center;
+      margin-bottom: 40px;
+    }
+
+    .brand h1 {
+      font-size: 2.5em;
+      background: linear-gradient(45deg, #00ffff, #0080ff, #00ffff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      font-weight: 700;
+      margin-bottom: 5px;
+      text-shadow: 0 0 20px rgba(0, 255, 255, 0.5);
+      animation: glow 2s ease-in-out infinite alternate;
+    }
+
+    @keyframes glow {
+      from { text-shadow: 0 0 20px rgba(0, 255, 255, 0.5); }
+      to { text-shadow: 0 0 30px rgba(0, 255, 255, 0.8); }
+    }
+
+    .brand p {
+      color: #888;
+      font-size: 0.9em;
+      letter-spacing: 1px;
+    }
+
+    h2 {
+      text-align: center;
+      margin-bottom: 30px;
+      color: #00ffff;
+      font-size: 1.8em;
+      font-weight: 600;
+      position: relative;
+    }
+
+    h2::after {
+      content: '';
+      position: absolute;
+      bottom: -10px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 50px;
+      height: 2px;
+      background: linear-gradient(45deg, #00ffff, #0080ff);
+      border-radius: 2px;
+    }
+
+    /* Form styling */
+    .form-group {
+      position: relative;
+      margin-bottom: 30px;
+    }
+
+    input[type="password"] {
+      width: 100%;
+      padding: 15px 20px;
+      border-radius: 12px;
+      border: 2px solid rgba(68, 68, 68, 0.5);
+      background: rgba(51, 51, 51, 0.8);
+      color: #fff;
+      font-size: 1em;
+      transition: all 0.3s ease;
+      outline: none;
+      backdrop-filter: blur(10px);
+    }
+
+    input[type="password"]:focus {
+      border-color: #00ffff;
+      box-shadow: 
+        0 0 0 3px rgba(0, 255, 255, 0.2),
+        0 0 20px rgba(0, 255, 255, 0.3);
+      background: rgba(51, 51, 51, 0.9);
+    }
+
+    input[type="password"]::placeholder {
+      color: #999;
+      transition: all 0.3s ease;
+    }
+
+    input[type="password"]:focus::placeholder {
+      color: #ccc;
+    }
+
+    /* Enhanced button */
+    .login-btn {
+      width: 100%;
+      padding: 15px;
+      background: linear-gradient(45deg, #00ffff, #0080ff);
+      border: none;
+      border-radius: 12px;
+      color: #000;
+      font-weight: bold;
+      font-size: 1.1em;
+      cursor: pointer;
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s ease;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      box-shadow: 0 8px 25px rgba(0, 255, 255, 0.3);
+    }
+
+    .login-btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.4), transparent);
+      transition: left 0.5s ease;
+    }
+
+    .login-btn:hover::before {
+      left: 100%;
+    }
+
+    .login-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 12px 35px rgba(0, 255, 255, 0.4);
+      background: linear-gradient(45deg, #00dddd, #0070dd);
+    }
+
+    .login-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Loading animation */
+    .loading {
+      position: relative;
+      pointer-events: none;
+    }
+
+    .loading::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      width: 20px;
+      height: 20px;
+      border: 2px solid transparent;
+      border-top: 2px solid #000;
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+      0% { transform: translate(-50%, -50%) rotate(0deg); }
+      100% { transform: translate(-50%, -50%) rotate(360deg); }
+    }
+
+    /* Security badge */
+    .security-badge {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin-top: 20px;
+      color: #666;
+      font-size: 0.8em;
+    }
+
+    .security-badge::before {
+      content: '🔒';
+      margin-right: 5px;
+    }
+
+    /* Responsive design */
+    @media (max-width: 480px) {
+      .login-box {
+        padding: 30px 20px;
+        margin: 20px;
+      }
+      
+      .brand h1 {
+        font-size: 2em;
+      }
+      
+      h2 {
+        font-size: 1.5em;
+      }
+    }
+
+    /* Accessibility */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+      }
+    }
+  </style>
+</head>
+<body>
+  <!-- Floating orbs -->
+  <div class="orb orb1"></div>
+  <div class="orb orb2"></div>
+  <div class="orb orb3"></div>
+
+  <div class="login-container">
+    <div class="login-box">
+      <div class="brand">
+        <h1>TechPulse</h1>
+        <p>Advanced Admin Portal</p>
+      </div>
+      
+      <h2>Admin Login</h2>
+      
+      <form method="POST" id="loginForm">
+        <div class="form-group">
+          <input type="password" name="password" placeholder="Enter Password" required>
+        </div>
+        <button type="submit" class="login-btn" id="loginBtn">
+          <span>Login</span>
+        </button>
+      </form>
+      
+      <div class="security-badge">
+        Secure Admin Access
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Enhanced form interaction
+    document.getElementById('loginForm').addEventListener('submit', function(e) {
+      const btn = document.getElementById('loginBtn');
+      btn.classList.add('loading');
+      btn.innerHTML = '';
+      
+      // Remove loading state after form submission
+      setTimeout(() => {
+        btn.classList.remove('loading');
+        btn.innerHTML = '<span>Login</span>';
+      }, 2000);
+    });
+
+    // Input focus effects
+    document.querySelector('input[type="password"]').addEventListener('focus', function() {
+      this.parentElement.style.transform = 'scale(1.02)';
+    });
+
+    document.querySelector('input[type="password"]').addEventListener('blur', function() {
+      this.parentElement.style.transform = 'scale(1)';
+    });
+
+    // Prevent form resubmission
+    if (window.history.replaceState) {
+      window.history.replaceState(null, null, window.location.href);
+    }
+  </script>
+</body>
+</html>

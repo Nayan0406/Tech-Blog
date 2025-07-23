@@ -13,12 +13,12 @@ from datetime import datetime
 sys.path.append(os.path.dirname(os.path.abspath(__file__)))
 
 # Import from main.py
-from main import (
-    generate_blogs, 
-    load_blog_history, 
-    save_blog_history,
-    blog_cards
-)
+try:
+    from main import generate_blogs, load_blog_history, save_blog_history
+    print("✅ Successfully imported blog generation functions")
+except ImportError as e:
+    print(f"❌ Import error: {e}")
+    sys.exit(1)
 
 def main():
     """Main function to generate daily blog"""

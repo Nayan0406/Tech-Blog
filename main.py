@@ -7,7 +7,7 @@ from string import Template
 from datetime import datetime
 from slugify import slugify
 from flask import Flask, render_template, send_from_directory, request, redirect, url_for, session
-from openai import OpenAI
+import openai
 from flask_cors import CORS
 from flask import jsonify
 from pymongo import MongoClient
@@ -21,6 +21,14 @@ PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
 NEWSAPI_KEY = os.getenv("NEWSAPI_KEY")
 OPENROUTER_KEY = os.getenv("OPENROUTER_KEY")
 
+# Check if required environment variables are set
+if not OPENROUTER_KEY:
+    print("⚠️ OPENROUTER_KEY not found in environment variables")
+if not NEWSAPI_KEY:
+    print("⚠️ NEWSAPI_KEY not found in environment variables")
+if not PEXELS_API_KEY:
+    print("⚠️ PEXELS_API_KEY not found in environment variables")
+
 TEMPLATE_PATH = "templates/blog_template.html"
 OUTPUT_DIR = "blog_output"
 HISTORY_FILE = "blog_history.json"
@@ -30,18 +38,27 @@ TODAY = datetime.now().strftime("%Y-%m-%d")
 SECRET_KEY = "supersecretkey"
 ADMIN_PASSWORD = "admin123"
 
-client = OpenAI(
-    api_key=OPENROUTER_KEY,
-    base_url="https://openrouter.ai/api/v1"
-)
+# Configure OpenAI for OpenRouter (older version)
+if OPENROUTER_KEY:
+    openai.api_key = OPENROUTER_KEY
+    openai.api_base = "https://openrouter.ai/api/v1"
 
 env_path = os.path.join(os.path.dirname(__file__), '.env')
 load_dotenv(dotenv_path=env_path)
 
 MONGO_URI = os.getenv("MONGO_URI")
-mongo_client = MongoClient(MONGO_URI)
-db = mongo_client["test"]         # Same as test
-mongo_collection = db["blogs"]  
+if MONGO_URI:
+    try:
+        mongo_client = MongoClient(MONGO_URI)
+        db = mongo_client["test"]         
+        mongo_collection = db["blogs"]
+        print("✅ MongoDB connection established")
+    except Exception as e:
+        print(f"❌ MongoDB connection failed: {e}")
+        mongo_collection = None
+else:
+    print("⚠️ MONGO_URI not found in environment variables")
+    mongo_collection = None  
 
 # test_blog = {
 #     "title": "Test Blog",
@@ -173,9 +190,9 @@ def generate_blog_from_title(title, description):
     try:
         # Debug: Check client type
         print(f"DEBUG: Generating {'AI-focused' if is_ai_content else 'general tech'} blog")
-        print(f"DEBUG: client type is {type(client)}")
+        print(f"DEBUG: Using OpenAI API via OpenRouter")
         
-        response = client.chat.completions.create(
+        response = openai.ChatCompletion.create(
             model="meta-llama/llama-3-70b-instruct",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.8,
@@ -485,11 +502,18 @@ def edit_blog(slug):
 
 @app.route("/api/blogs")
 def api_blogs():
-    blogs = list(mongo_collection.find({}, {"_id": 1, "title": 1, "image": 1, "date": 1, "description": 1, "link": 1}))
-    # Convert ObjectId to string if needed
-    for blog in blogs:
-        blog["_id"] = str(blog["_id"])
-    return jsonify({"blogs": blogs})
+    if mongo_collection:
+        try:
+            blogs = list(mongo_collection.find({}, {"_id": 1, "title": 1, "image": 1, "date": 1, "description": 1, "link": 1}))
+            # Convert ObjectId to string if needed
+            for blog in blogs:
+                blog["_id"] = str(blog["_id"])
+            return jsonify({"blogs": blogs})
+        except Exception as e:
+            print(f"❌ MongoDB query failed: {e}")
+            return jsonify({"blogs": [], "error": "Database connection failed"})
+    else:
+        return jsonify({"blogs": [], "error": "Database not configured"})
 
 @app.route("/api/generate-blog", methods=["POST"])
 def api_generate_blog():

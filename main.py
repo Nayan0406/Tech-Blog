@@ -237,151 +237,6 @@ def clear_admin_input():
     with open(ADMIN_INPUT_FILE, "w", encoding="utf-8") as f:
         f.write("{}")
 
-# # ========== BACKGROUND GENERATION ========== #
-# def load_blog_history():
-#     if os.path.exists(HISTORY_FILE):
-#         with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-#             return json.load(f)
-#     return []
-
-# def save_blog_history():
-#     with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-#         json.dump(blog_cards, f, indent=2)
-
-# def read_admin_input():
-#     if os.path.exists(ADMIN_INPUT_FILE):
-#         with open(ADMIN_INPUT_FILE, "r", encoding="utf-8") as f:
-#             try:
-#                 data = json.load(f)
-#                 if data.get("title") and data.get("description"):
-#                     return data
-#             except json.JSONDecodeError:
-#                 return None
-#     return None
-
-# def clear_admin_input():
-#     with open(ADMIN_INPUT_FILE, "w", encoding="utf-8") as f:
-#         f.write("{}")
-
-# # def generate_blogs():
-# #     global blog_cards
-
-# #     admin_data = read_admin_input()
-# #     if admin_data:
-# #         articles = [admin_data]
-# #         print("📝 Admin blog input used")
-# #         clear_admin_input()
-# #     else:
-# #         articles = fetch_tech_news()
-# #         if not articles:
-# #             print("❌ No articles fetched.")
-# #             return
-
-# #     with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
-# #         template = Template(f.read())
-
-# #     for article in articles:
-# #         title = article["title"]
-# #         if any(blog["title"].lower() == title.lower() for blog in blog_cards):
-# #             print(f"⏭️ Blog already exists: {title}")
-# #             continue
-
-# #         description = article.get("description", "")
-# #         image_url = fetch_image(title)
-# #         blog_content = generate_blog_from_title(title, description)
-
-# #         slug = slugify(title)
-# #         timestamp = datetime.now().strftime("%H-%M-%S")
-# #         output_filename = f"{slug}-{timestamp}.html"
-# #         output_path = os.path.join(OUTPUT_DIR, output_filename)
-
-# #         html_content = template.substitute(title=title, content=blog_content)
-# #         with open(output_path, "w", encoding="utf-8") as f:
-# #             f.write(html_content)
-
-# #         blog_cards.insert(0, {
-# #             "title": title,
-# #             "date": TODAY,
-# #             "desc": "Click to read original tech blog based on this news.",
-# #             "image_url": image_url,
-# #             "link": f"/blog_output/{output_filename}"
-# #         })
-
-# #         if len(blog_cards) > 50:
-# #             blog_cards = blog_cards[:50]
-
-# #         save_blog_history()
-# #         print(f"✅ Blog generated: {title}")
-# def generate_blogs():
-#     global blog_cards
-
-#     tech_keywords = [
-#         "ai", "artificial intelligence", "robot", "machine learning", "cloud",
-#         "neural", "data", "software", "hardware", "semiconductor", "quantum",
-#         "programming", "automation", "cybersecurity", "algorithm", "model", "token", "processor"
-#     ]
-
-#     def is_tech_article(article):
-#         text = (article.get("title", "") + " " + article.get("description", "")).lower()
-#         return any(keyword in text for keyword in tech_keywords)
-
-#     admin_data = read_admin_input()
-#     if admin_data:
-#         articles = [admin_data]
-#         print("📝 Admin blog input used")
-#         clear_admin_input()
-#     else:
-#         articles = fetch_tech_news()
-#         if not articles:
-#             print("❌ No articles fetched.")
-#             return
-#         articles = [a for a in articles if is_tech_article(a)]
-#         if not articles:
-#             print("⏭️ No tech articles passed the filter.")
-#             return
-
-#     with open(TEMPLATE_PATH, "r", encoding="utf-8") as f:
-#         template = Template(f.read())
-
-#     existing_files = os.listdir(OUTPUT_DIR)
-
-#     for article in articles:
-#         title = article["title"]
-#         slug = slugify(title)
-
-#         # Prevent blog duplicates both in-memory and by file
-#         if any(slug in blog["link"] for blog in blog_cards) or any(slug in fname for fname in existing_files):
-#             print(f"⏭️ Blog already exists: {title}")
-#             continue
-
-#         description = article.get("description", "")
-#         image_url = fetch_image(title)
-#         blog_content = generate_blog_from_title(title, description)
-
-#         # ✅ INSERT THIS LINE
-#         if not check_grammar_with_languagetool(blog_content):
-#             print(f"🚫 Blog rejected due to grammar issues: {title}")
-#             continue
-
-
-#         timestamp = datetime.now().strftime("%H-%M-%S")
-#         output_filename = f"{slug}-{timestamp}.html"
-#         output_path = os.path.join(OUTPUT_DIR, output_filename)
-
-#         html_content = template.substitute(title=title, content=blog_content)
-#         with open(output_path, "w", encoding="utf-8") as f:
-#             f.write(html_content)
-
-#         blog_cards.insert(0, {
-#             "title": title,
-#             "date": datetime.now().strftime("%Y-%m-%d"),
-#             "desc": "Click to read original tech blog based on this news.",
-#             "image_url": image_url,
-#             "link": f"/blog_output/{output_filename}"
-#         })
-
-#         save_blog_history()
-#         print(f"✅ Blog generated: {title}")
 def generate_blogs():
     global blog_cards
 
@@ -507,23 +362,32 @@ def generate_blogs():
         if len(blog_cards) > 50:
             blog_cards = blog_cards[:50]
 
-# # Start the background loop
+# # Start the background loop - DISABLED for Render deployment
+# Background threads don't work reliably on Render. Use scheduled jobs instead.
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 blog_cards = load_blog_history()
-generate_blogs()
 
-def start_blog_loop():
-    while True:
-        try:
-            generate_blogs()
-            print(f"🔄 Blog generation check completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-        except Exception as e:
-            print(f"❌ Error in blog generation: {e}")
-        
-        # ✅ Check every hour but only generate after 24 hours
-        time.sleep(3600)  # 1 hour = 3600 seconds
+# Only generate blog on startup for testing locally
+# In production, blogs are generated via scheduled job (generate_blog_job.py)
+if os.getenv("ENVIRONMENT") != "production":
+    print("🔧 Local development - generating blog on startup")
+    generate_blogs()
+else:
+    print("🚀 Production mode - blogs generated via scheduled job")
 
-threading.Thread(target=start_blog_loop, daemon=True).start()
+# def start_blog_loop():
+#     while True:
+#         try:
+#             generate_blogs()
+#             print(f"🔄 Blog generation check completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
+#         except Exception as e:
+#             print(f"❌ Error in blog generation: {e}")
+#         
+#         # ✅ Check every hour but only generate after 24 hours
+#         time.sleep(3600)  # 1 hour = 3600 seconds
+
+# Background thread disabled for Render deployment
+# threading.Thread(target=start_blog_loop, daemon=True).start()
 
 # # ========== ROUTES ========== #
 @app.route("/")
@@ -619,6 +483,23 @@ def api_blogs():
     for blog in blogs:
         blog["_id"] = str(blog["_id"])
     return jsonify({"blogs": blogs})
+
+@app.route("/api/generate-blog", methods=["POST"])
+def api_generate_blog():
+    """Manual blog generation endpoint for testing"""
+    try:
+        print("🔧 Manual blog generation triggered via API")
+        generate_blogs()
+        return jsonify({
+            "success": True, 
+            "message": "Blog generation completed",
+            "total_blogs": len(blog_cards)
+        })
+    except Exception as e:
+        return jsonify({
+            "success": False, 
+            "error": str(e)
+        }), 500
 
 @app.route("/logout")
 def logout():

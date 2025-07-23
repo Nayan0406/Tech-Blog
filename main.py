@@ -240,6 +240,11 @@ def clear_admin_input():
 def generate_blogs():
     global blog_cards
 
+    # Ensure blog_cards is loaded
+    if not blog_cards:
+        blog_cards = load_blog_history()
+        print(f"📚 Loaded {len(blog_cards)} existing blogs")
+
     # ✅ Proper 24-hour check with timestamp
     today_str = datetime.now().strftime("%Y-%m-%d")
     current_time = datetime.now()
@@ -371,9 +376,11 @@ blog_cards = load_blog_history()
 # In production, blogs are generated via scheduled job (generate_blog_job.py)
 if os.getenv("ENVIRONMENT") != "production":
     print("🔧 Local development - generating blog on startup")
-    generate_blogs()
+    # Only generate if no blogs exist or for testing
+    if not blog_cards or len(blog_cards) == 0:
+        generate_blogs()
 else:
-    print("🚀 Production mode - blogs generated via scheduled job")
+    print("🚀 Production mode - blogs generated via scheduled job only")
 
 # def start_blog_loop():
 #     while True:

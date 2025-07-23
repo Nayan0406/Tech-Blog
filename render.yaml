@@ -1,0 +1,37 @@
+services:
+  # Web service for the Flask app
+  - type: web
+    name: tech-blog-web
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python main.py
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PEXELS_API_KEY
+        fromDatabase: false
+      - key: NEWSAPI_KEY
+        fromDatabase: false
+      - key: OPENROUTER_KEY
+        fromDatabase: false
+      - key: MONGO_URI
+        fromDatabase: false
+
+  # Cron job for daily blog generation
+  - type: cron
+    name: daily-blog-generator
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: python generate_blog_job.py
+    schedule: "0 9 * * *"  # Every day at 9 AM UTC (adjust as needed)
+    envVars:
+      - key: ENVIRONMENT
+        value: production
+      - key: PEXELS_API_KEY
+        fromDatabase: false
+      - key: NEWSAPI_KEY
+        fromDatabase: false
+      - key: OPENROUTER_KEY
+        fromDatabase: false
+      - key: MONGO_URI
+        fromDatabase: false

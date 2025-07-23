@@ -29,12 +29,12 @@ TODAY = datetime.now().strftime("%Y-%m-%d")
 SECRET_KEY = "supersecretkey"
 ADMIN_PASSWORD = "admin123"
 
-# OpenAI client setup
+# OpenAI client setup for older version (0.28.1)
 if OPENROUTER_KEY:
-    client = openai.OpenAI(
-        api_key=OPENROUTER_KEY,
-        base_url="https://openrouter.ai/api/v1"
-    )
+    openai.api_key = OPENROUTER_KEY
+    openai.api_base = "https://openrouter.ai/api/v1"
+    print("✅ OpenAI client configured")
+    client = openai  # Use the module directly
 else:
     print("⚠️ OPENROUTER_KEY not found")
     client = None
@@ -177,17 +177,17 @@ def generate_blog_from_title(title, description):
     try:
         # Debug: Check client type
         print(f"DEBUG: Generating {'AI-focused' if is_ai_content else 'general tech'} blog")
-        print(f"DEBUG: client type is {type(client)}")
         
         if client is None:
             return "<p>Error: OpenAI client not configured</p>"
         
-        response = client.chat.completions.create(
+        # Use the older OpenAI API format (v0.28.1)
+        response = openai.ChatCompletion.create(
             model="meta-llama/llama-3-70b-instruct",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.8,
             top_p=0.95,
-            max_tokens=1500 if is_ai_content else 1000,  # More tokens for AI content
+            max_tokens=1500 if is_ai_content else 1000,
         )
         blog = response.choices[0].message.content.strip()
         formatted_blog = "".join(f"<p>{para.strip()}</p>" for para in blog.split("\n\n") if para.strip())

@@ -230,14 +230,59 @@ def check_grammar_with_languagetool(text):
 
 # ========== BACKGROUND GENERATION ========== #
 def load_blog_history():
+    """Load blog history from MongoDB first, then fallback to local file"""
+    if mongo_collection:
+        try:
+            # Load from MongoDB
+            blogs = list(mongo_collection.find().sort("timestamp", -1))
+            if blogs:
+                print(f"📚 Loaded {len(blogs)} blogs from MongoDB")
+                return blogs
+        except Exception as e:
+            print(f"⚠️ MongoDB load failed: {e}")
+    
+    # Fallback to local file
     if os.path.exists(HISTORY_FILE):
-        with open(HISTORY_FILE, "r", encoding="utf-8") as f:
-            return json.load(f)
+        try:
+            with open(HISTORY_FILE, "r", encoding="utf-8") as f:
+                local_blogs = json.load(f)
+                print(f"📚 Loaded {len(local_blogs)} blogs from local file")
+                return local_blogs
+        except Exception as e:
+            print(f"⚠️ Local file load failed: {e}")
+    
     return []
 
 def save_blog_history():
-    with open(HISTORY_FILE, "w", encoding="utf-8") as f:
-        json.dump(blog_cards, f, indent=2)
+    """Save blog history to both MongoDB and local file"""
+    global blog_cards
+    
+    # Save to MongoDB first
+    if mongo_collection:
+        try:
+            # Clear existing blogs and insert new ones
+            mongo_collection.delete_many({})
+            if blog_cards:
+                # Add MongoDB ObjectId for each blog
+                blogs_to_save = []
+                for blog in blog_cards:
+                    blog_copy = blog.copy()
+                    if "_id" not in blog_copy:
+                        blog_copy["_id"] = slugify(blog_copy["title"] + "-" + blog_copy["date"])
+                    blogs_to_save.append(blog_copy)
+                
+                mongo_collection.insert_many(blogs_to_save)
+                print(f"✅ Saved {len(blogs_to_save)} blogs to MongoDB")
+        except Exception as e:
+            print(f"⚠️ MongoDB save failed: {e}")
+    
+    # Also save to local file as backup
+    try:
+        with open(HISTORY_FILE, "w", encoding="utf-8") as f:
+            json.dump(blog_cards, f, indent=2)
+        print(f"✅ Saved {len(blog_cards)} blogs to local file")
+    except Exception as e:
+        print(f"⚠️ Local file save failed: {e}")
 
 def read_admin_input():
     if os.path.exists(ADMIN_INPUT_FILE):
@@ -266,26 +311,23 @@ def generate_blogs():
     today_str = datetime.now().strftime("%Y-%m-%d")
     current_time = datetime.now()
     
-    # Check if we should generate a new blog (every 24 hours)
+    # For production, allow generation if it's a new day or first time
     should_generate = True
     if blog_cards:
         last_blog = blog_cards[0]
-        last_blog_date = last_blog["date"]
+        last_blog_date = last_blog.get("date", "")
         
-        # If there's already a blog from today, check if 24 hours have passed
-        if last_blog_date == today_str and "timestamp" in last_blog:
-            from datetime import datetime as dt
-            last_timestamp = dt.fromisoformat(last_blog["timestamp"])
-            time_diff = current_time - last_timestamp
-            hours_passed = time_diff.total_seconds() / 3600
-            
-            if hours_passed < 24:
-                print(f"⏰ Last blog was {hours_passed:.1f} hours ago. Waiting for 24 hours...")
+        # If there's already a blog from today, skip (unless in development)
+        if last_blog_date == today_str:
+            if os.getenv("ENVIRONMENT") == "production":
+                print(f"⏰ Blog already exists for today ({today_str}). Skipping...")
                 return
             else:
-                print(f"✅ {hours_passed:.1f} hours passed since last blog. Generating new AI blog...")
+                print("🧪 Development mode: allowing multiple blogs per day...")
         else:
-            print("📝 Generating new AI-focused blog for today...")
+            print(f"✅ Generating new AI-focused blog for {today_str}...")
+    else:
+        print(f"📝 First blog generation for {today_str}...")
     
     tech_keywords = [
         # AI and ML keywords (high priority)

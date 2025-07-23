@@ -6,10 +6,9 @@ import requests
 from string import Template
 from datetime import datetime
 from slugify import slugify
-from flask import Flask, render_template, send_from_directory, request, redirect, url_for, session
+from flask import Flask, render_template, send_from_directory, request, redirect, url_for, session, jsonify
 import openai
 from flask_cors import CORS
-from flask import jsonify
 from pymongo import MongoClient
 from dotenv import load_dotenv
 
@@ -21,14 +20,6 @@ PEXELS_API_KEY = os.getenv("PEXELS_API_KEY")
 NEWSAPI_KEY = os.getenv("NEWSAPI_KEY")
 OPENROUTER_KEY = os.getenv("OPENROUTER_KEY")
 
-# Check if required environment variables are set
-if not OPENROUTER_KEY:
-    print("⚠️ OPENROUTER_KEY not found in environment variables")
-if not NEWSAPI_KEY:
-    print("⚠️ NEWSAPI_KEY not found in environment variables")
-if not PEXELS_API_KEY:
-    print("⚠️ PEXELS_API_KEY not found in environment variables")
-
 TEMPLATE_PATH = "templates/blog_template.html"
 OUTPUT_DIR = "blog_output"
 HISTORY_FILE = "blog_history.json"
@@ -38,15 +29,22 @@ TODAY = datetime.now().strftime("%Y-%m-%d")
 SECRET_KEY = "supersecretkey"
 ADMIN_PASSWORD = "admin123"
 
-# Configure OpenAI for OpenRouter (older version)
+# OpenAI client setup
 if OPENROUTER_KEY:
-    openai.api_key = OPENROUTER_KEY
-    openai.api_base = "https://openrouter.ai/api/v1"
+    client = openai.OpenAI(
+        api_key=OPENROUTER_KEY,
+        base_url="https://openrouter.ai/api/v1"
+    )
+else:
+    print("⚠️ OPENROUTER_KEY not found")
+    client = None
 
-env_path = os.path.join(os.path.dirname(__file__), '.env')
-load_dotenv(dotenv_path=env_path)
-
+# MongoDB setup
 MONGO_URI = os.getenv("MONGO_URI")
+mongo_client = None
+db = None
+mongo_collection = None
+
 if MONGO_URI:
     try:
         mongo_client = MongoClient(MONGO_URI)
@@ -54,22 +52,11 @@ if MONGO_URI:
         mongo_collection = db["blogs"]
         print("✅ MongoDB connection established")
     except Exception as e:
-        print(f"❌ MongoDB connection failed: {e}")
+        print(f"⚠️ MongoDB connection failed: {e}")
         mongo_collection = None
 else:
     print("⚠️ MONGO_URI not found in environment variables")
-    mongo_collection = None  
-
-# test_blog = {
-#     "title": "Test Blog",
-#     "image": "https://via.placeholder.com/600x400",
-#     "date": str(datetime.now().date()),
-#     "description": "This is a test blog generated manually.",
-#     "link": "https://example.com/test-blog"
-# }
-
-# mongo_collection.insert_one(test_blog)
-# print("✅ Test blog inserted")
+    mongo_collection = None
 
 app = Flask(__name__)
 app.secret_key = SECRET_KEY
@@ -190,9 +177,12 @@ def generate_blog_from_title(title, description):
     try:
         # Debug: Check client type
         print(f"DEBUG: Generating {'AI-focused' if is_ai_content else 'general tech'} blog")
-        print(f"DEBUG: Using OpenAI API via OpenRouter")
+        print(f"DEBUG: client type is {type(client)}")
         
-        response = openai.ChatCompletion.create(
+        if client is None:
+            return "<p>Error: OpenAI client not configured</p>"
+        
+        response = client.chat.completions.create(
             model="meta-llama/llama-3-70b-instruct",
             messages=[{"role": "user", "content": prompt}],
             temperature=0.8,
@@ -231,7 +221,7 @@ def check_grammar_with_languagetool(text):
 # ========== BACKGROUND GENERATION ========== #
 def load_blog_history():
     """Load blog history from MongoDB first, then fallback to local file"""
-    if mongo_collection:
+    if mongo_collection is not None:
         try:
             # Load from MongoDB
             blogs = list(mongo_collection.find().sort("timestamp", -1))
@@ -258,7 +248,7 @@ def save_blog_history():
     global blog_cards
     
     # Save to MongoDB first
-    if mongo_collection:
+    if mongo_collection is not None:
         try:
             # Clear existing blogs and insert new ones
             mongo_collection.delete_many({})
@@ -426,7 +416,6 @@ def generate_blogs():
         if len(blog_cards) > 50:
             blog_cards = blog_cards[:50]
 
-# # Start the background loop - DISABLED for Render deployment
 # Background threads don't work reliably on Render. Use scheduled jobs instead.
 os.makedirs(OUTPUT_DIR, exist_ok=True)
 blog_cards = load_blog_history()
@@ -434,28 +423,13 @@ blog_cards = load_blog_history()
 # Only generate blog on startup for testing locally
 # In production, blogs are generated via scheduled job (generate_blog_job.py)
 if os.getenv("ENVIRONMENT") != "production":
-    print("🔧 Local development - generating blog on startup")
-    # Only generate if no blogs exist or for testing
-    if not blog_cards or len(blog_cards) == 0:
-        generate_blogs()
+    print("🧪 Development mode: generating blog on startup...")
+    generate_blogs()
 else:
-    print("🚀 Production mode - blogs generated via scheduled job only")
+    print("🚀 Production mode: blogs will be generated via scheduled job")
+    print(f"📚 Currently have {len(blog_cards)} blogs loaded")
 
-# def start_blog_loop():
-#     while True:
-#         try:
-#             generate_blogs()
-#             print(f"🔄 Blog generation check completed at {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}")
-#         except Exception as e:
-#             print(f"❌ Error in blog generation: {e}")
-#         
-#         # ✅ Check every hour but only generate after 24 hours
-#         time.sleep(3600)  # 1 hour = 3600 seconds
-
-# Background thread disabled for Render deployment
-# threading.Thread(target=start_blog_loop, daemon=True).start()
-
-# # ========== ROUTES ========== #
+# ========== ROUTES ========== #
 @app.route("/")
 def index():
     per_page = 5
@@ -544,7 +518,7 @@ def edit_blog(slug):
 
 @app.route("/api/blogs")
 def api_blogs():
-    if mongo_collection:
+    if mongo_collection is not None:
         try:
             blogs = list(mongo_collection.find({}, {"_id": 1, "title": 1, "image": 1, "date": 1, "description": 1, "link": 1}))
             # Convert ObjectId to string if needed
@@ -581,4 +555,3 @@ def logout():
 
 if __name__ == "__main__":
     app.run(debug=True, port=5001)
-
